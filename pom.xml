@@ -21,6 +21,7 @@
 
     <properties>
         <java.version>21</java.version>
+        <aws-sdk.version>2.29.0</aws-sdk.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
@@ -46,6 +47,11 @@
             <artifactId>mysql-connector-j</artifactId>
             <scope>runtime</scope>
         </dependency>
+        <!-- Cliente de Amazon SQS (publica alertas de stock bajo) -->
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>sqs</artifactId>
+        </dependency>
         <!-- Pruebas unitarias (JUnit 5 + Mockito) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -53,6 +59,19 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <!-- Versiones compatibles del AWS SDK v2 -->
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>software.amazon.awssdk</groupId>
+                <artifactId>bom</artifactId>
+                <version>${aws-sdk.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <build>
         <plugins>
