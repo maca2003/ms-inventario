@@ -8,6 +8,7 @@ import cl.duoc.msinventario.dto.MovimientoRequest;
 import cl.duoc.msinventario.dto.MovimientoResponse;
 import cl.duoc.msinventario.exception.ConflictoException;
 import cl.duoc.msinventario.exception.RecursoNoEncontradoException;
+import cl.duoc.msinventario.messaging.AlertaStockPublisher;
 import cl.duoc.msinventario.model.Inventario;
 import cl.duoc.msinventario.model.Lote;
 import cl.duoc.msinventario.model.Movimiento;
@@ -26,13 +27,16 @@ public class InventarioService {
     private final InventarioRepository inventarioRepository;
     private final LoteRepository loteRepository;
     private final MovimientoRepository movimientoRepository;
+    private final AlertaStockPublisher alertaStockPublisher;
 
     public InventarioService(InventarioRepository inventarioRepository,
                              LoteRepository loteRepository,
-                             MovimientoRepository movimientoRepository) {
+                             MovimientoRepository movimientoRepository,
+                             AlertaStockPublisher alertaStockPublisher) {
         this.inventarioRepository = inventarioRepository;
         this.loteRepository = loteRepository;
         this.movimientoRepository = movimientoRepository;
+        this.alertaStockPublisher = alertaStockPublisher;
     }
 
     @Transactional(readOnly = true)
@@ -123,6 +127,11 @@ public class InventarioService {
 
         inventario.setStockActual(inventario.getStockActual() - request.cantidad());
         registrarMovimiento(inventario, TipoMovimiento.SALIDA, request.cantidad(), request.motivo());
+
+        // Evento asíncrono hacia SQS cuando el stock llega al mínimo
+        if (inventario.getStockActual() <= inventario.getStockMinimo()) {
+            alertaStockPublisher.publicarStockBajo(inventario);
+        }
         return aResponse(inventario);
     }
 
